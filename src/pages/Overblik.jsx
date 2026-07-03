@@ -797,7 +797,7 @@ function CompoundTool() {
         <div className="rounded-xl border border-[var(--line)] bg-[var(--panel-2)] p-5">
           <Slider
             label="Antal væddemål"
-            help="Hvor mange bets du placerer i alt. Med vores system er omkring 900 bets realistisk på cirka 3 måneder."
+            help="Hvor mange bets du placerer i alt. I gennemsnit laver man typisk 250-500 bets om måneden med vores system."
             value={numBets}
             onChange={(v) => setNumBets(Math.round(v))}
             min={100}
