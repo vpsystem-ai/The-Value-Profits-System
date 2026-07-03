@@ -723,7 +723,7 @@ function CompoundTool() {
   const [start, setStart] = useState(10000);
   const [numBets, setNumBets] = useState(900);
   const [stakePct, setStakePct] = useState(2.5); // % af bankroll
-  const [evPct, setEvPct] = useState(5); // % af indsats
+  const [evPct, setEvPct] = useState(6); // % af indsats
   const [compound, setCompound] = useState(true); // rente-rente til/fra
   const adjustEvery = 300; // justér indsats ~1 gang om måneden (~300 bets)
 
@@ -805,6 +805,18 @@ function CompoundTool() {
             step={50}
             format={(v) => `${dk(v, 0)} stk.`}
           />
+          <p className="mt-2 text-xs text-[var(--muted)]">
+            {(() => {
+              const m = numBets / 300;
+              const label =
+                m < 1
+                  ? "under 1 måned"
+                  : `ca. ${m % 1 === 0 ? dk(m, 0) : dk(m, 1)} ${
+                      m <= 1 ? "måned" : "måneder"
+                    }`;
+              return `≈ ${label} (vi regner ca. 300 bets om måneden)`;
+            })()}
+          </p>
         </div>
 
         <div className="space-y-4 rounded-xl border border-[var(--line)] bg-[var(--panel-2)] p-5">
@@ -821,6 +833,11 @@ function CompoundTool() {
             step={0.5}
             format={(v) => pct(v, v % 1 ? 1 : 0)}
           />
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            = <b className="text-[var(--ink-2)]">{kr((start * stakePct) / 100)}</b>{" "}
+            pr. bet ud fra din startbankroll på {kr(start)}
+            {compound ? " (vokser med din bankroll)" : ""}
+          </p>
           {stakePct >= 4 && (
             <p
               className="rounded-lg border p-2.5 text-xs leading-relaxed"
@@ -837,7 +854,7 @@ function CompoundTool() {
           )}
           <Slider
             label="Expected value (+ev, % af indsats)"
-            help="Din gennemsnitlige fordel pr. bet. 5% betyder, at du i gennemsnit får 5 kr igen for hver 100 kr, du satser – på den lange bane."
+            help="Din gennemsnitlige fordel pr. bet. 6% betyder, at du i gennemsnit får 6 kr igen for hver 100 kr, du satser – på den lange bane."
             value={evPct}
             onChange={setEvPct}
             min={1}
