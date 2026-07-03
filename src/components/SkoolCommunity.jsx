@@ -64,7 +64,8 @@ export default function SkoolCommunity() {
 
   return (
     <section className="container-xl pt-8 md:pt-12 relative z-10">
-      <div className="max-w-5xl mx-auto">
+      <div className="bg-glow bg-glow-lg -top-10 right-0" />
+      <div className="relative z-10 max-w-5xl mx-auto">
         <div className="card-accent p-6 sm:p-8 md:p-10">
           <div className="grid md:grid-cols-2 gap-8 lg:gap-10 items-center">
             {/* Venstre – tekst */}

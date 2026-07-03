@@ -1442,7 +1442,9 @@ export default function Overblik() {
   const [tab, setTab] = useState("value");
 
   return (
-    <div className="container-xl py-12 text-[var(--ink)]">
+    <div className="container-xl relative overflow-hidden py-12 text-[var(--ink)]">
+      <div className="bg-glow bg-glow-lg -top-16 right-0" />
+      <div className="relative z-10">
       <header className="mb-8 max-w-2xl space-y-3">
         <h1 className="text-3xl font-black tracking-tight glow-accent sm:text-4xl">
           Forstå det på 30 sekunder
@@ -1679,9 +1681,10 @@ export default function Overblik() {
       {tab === "value" && (
         <section
           id="potentiale"
-          className="mt-16 scroll-mt-24 border-t border-[var(--line)] pt-10"
+          className="relative mt-16 scroll-mt-24 border-t border-[var(--line)] pt-10"
         >
-          <header className="mb-6 max-w-2xl space-y-2">
+          <div className="bg-glow bg-glow-lg -top-10 left-0" />
+          <header className="relative z-10 mb-6 max-w-2xl space-y-2">
             <span
               className="inline-block rounded-full px-3 py-1 text-xs font-bold"
               style={{ color: GOOD, background: `${GOOD}1a` }}
@@ -1700,7 +1703,9 @@ export default function Overblik() {
               Prøv selv:
             </p>
           </header>
-          <CompoundTool />
+          <div className="relative z-10">
+            <CompoundTool />
+          </div>
         </section>
       )}
 
@@ -1744,6 +1749,7 @@ export default function Overblik() {
             på Skool
           </a>
         </p>
+      </div>
       </div>
     </div>
   );

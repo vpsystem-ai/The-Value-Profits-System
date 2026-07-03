@@ -26,10 +26,10 @@ export default function Home() {
   return (
     <>
       <SEO schema={combinedSchema} />
-      <div className="relative">
+      <div className="relative overflow-hidden">
         {/* Accent glows */}
-        <div className="bg-glow top-24 -left-10"></div>
-        <div className="bg-glow bottom-24 right-0"></div>
+        <div className="bg-glow bg-glow-lg top-16 -left-10"></div>
+        <div className="bg-glow bg-glow-lg bottom-24 right-0"></div>
 
         {/* HERO */}
         <section className="container-xl pt-8 md:pt-12 relative z-10">
@@ -60,7 +60,8 @@ export default function Home() {
 
             {/* VIDEO */}
             <section id="video" className="container-xl pt-4 md:pt-6 relative z-10 scroll-mt-24">
-              <div className="max-w-3xl mx-auto">
+              <div className="bg-glow bg-glow-xl left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <div className="relative z-10 max-w-3xl mx-auto">
                 <VidalyticsEmbed />
               </div>
             </section>
@@ -222,8 +223,9 @@ export default function Home() {
           <FAQ />
 
           {/* Final CTA */}
-          <div className="mt-8 md:mt-12 max-w-3xl mx-auto">
-            <div className="card-accent p-8 md:p-10 text-center">
+          <div className="relative mt-8 md:mt-12 max-w-3xl mx-auto">
+            <div className="bg-glow bg-glow-lg left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="card-accent relative z-10 p-8 md:p-10 text-center">
               <h3 className="h2 mb-4">Klar til at komme i gang?</h3>
               <p className="text-lg text-[var(--ink-2)] mb-6 max-w-xl mx-auto">
                 Book en gratis 30 minutters demo, eller tilmeld dig vores gratis
@@ -263,7 +265,7 @@ export default function Home() {
           </div>
         </section>
 
-        <footer className="container-xl py-14 text-center text-[var(--muted)] relative z-10">
+        <footer className="container-xl pt-8 pb-6 text-center text-sm text-[var(--muted)] relative z-10">
           © {new Date().getFullYear()} Value Profits System
         </footer>
       </div>

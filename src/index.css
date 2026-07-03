@@ -402,11 +402,45 @@ a:focus-visible {
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(71, 250, 190, 0.13),
+    rgba(71, 250, 190, 0.15),
     transparent 70%
   );
   filter: blur(90px);
   z-index: 0;
+  pointer-events: none;
+}
+/* Større, blødere spot – til sektioner der må have lidt mere liv */
+.bg-glow-lg {
+  width: 560px;
+  height: 560px;
+  background: radial-gradient(
+    circle,
+    rgba(71, 250, 190, 0.19),
+    transparent 70%
+  );
+  filter: blur(130px);
+}
+/* Ekstra stort, tydeligt spot – fx bag hero-videoen på forsiden */
+.bg-glow-xl {
+  width: 720px;
+  height: 720px;
+  background: radial-gradient(
+    circle,
+    rgba(71, 250, 190, 0.26),
+    transparent 68%
+  );
+  filter: blur(120px);
+}
+/* Mindre, mere fokuseret spot */
+.bg-glow-sm {
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(
+    circle,
+    rgba(71, 250, 190, 0.16),
+    transparent 70%
+  );
+  filter: blur(70px);
 }
 /* Badge row (social proof) – mere luft */
 .badge-row {
