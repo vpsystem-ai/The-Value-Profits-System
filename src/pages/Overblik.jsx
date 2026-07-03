@@ -80,7 +80,7 @@ function Slider({ label, value, onChange, min, max, step, format, help }) {
             </>
           )}
         </span>
-        <span className="text-sm font-semibold text-[var(--accent)]">
+        <span className="shrink-0 whitespace-nowrap text-right text-sm font-semibold text-[var(--accent)]">
           {format ? format(value) : value}
         </span>
       </div>
@@ -281,6 +281,95 @@ function AnalysisPanel() {
 }
 
 /* ---------- 1) VALUE BETTING ---------- */
+function CoinflipCard({ good, odds }) {
+  const color = good ? GOOD : BAD;
+  const payout = odds * 100; // udbetaling af 100 kr indsats
+  const ev = 0.5 * odds * 100 - 100; // forventet gevinst pr. 100 kr (50% mønt)
+  return (
+    <div
+      className="rounded-2xl border bg-[var(--panel)] p-5"
+      style={{ borderColor: `${color}40` }}
+    >
+      <span
+        className="inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide"
+        style={{ color, background: `${color}14` }}
+      >
+        {good ? "Value ✓" : "Ingen value ✕"}
+      </span>
+
+      <p className="mt-4 text-xs uppercase tracking-wide text-[var(--muted)]">
+        Bookmakeren tilbyder
+      </p>
+      <div className="flex items-baseline gap-2">
+        <span className="text-4xl font-black tracking-tight text-[var(--ink)]">
+          {dk(odds, 2)}
+        </span>
+        <span className="text-sm text-[var(--muted)]">i odds</span>
+      </div>
+      <p className="mt-1 text-sm font-semibold" style={{ color }}>
+        {good ? "Højere" : "Lavere"} end fair odds (2,00)
+      </p>
+
+      <div className="mt-4 space-y-2 border-t border-[var(--line)] pt-4 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-[var(--muted)]">100 kr bliver til</span>
+          <b className="text-[var(--ink)]">{kr(payout)}</b>
+        </div>
+        <div className="flex items-center justify-between">
+          <Term def="Gennemsnittet, hvis du spillede samme bet rigtig mange gange. Du vinder eller taber selvfølgelig det enkelte væddemål – men på tværs af alle bets lander du i snit her.">
+            <span className="text-[var(--muted)]">I snit pr. bet</span>
+          </Term>
+          <b style={{ color }}>
+            {ev >= 0 ? "+" : "−"}
+            {kr(Math.abs(ev))}
+          </b>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CoinflipExplainer() {
+  return (
+    <div className="rounded-2xl border border-[var(--line)] bg-[var(--panel-2)] p-5 sm:p-6">
+      <p className="text-xs font-black uppercase tracking-wide text-[var(--muted)]">
+        Forestil dig et coinflip
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--ink-2)] sm:text-base">
+        En mønt lander på krone <b className="text-[var(--ink)]">50%</b> af
+        gangene. Dit{" "}
+        <Term def="Fair odds er de 'ærlige' odds, der passer præcis til sandsynligheden. Ved 50% er dine fair odds 2,00 – for så går du hverken i plus eller minus på den lange bane.">
+          fair odds
+        </Term>{" "}
+        er derfor <b className="text-[var(--ink)]">2,00</b> – 100 kr bliver til 200
+        kr, og på den lange bane går du præcis i nul. Alt afhænger så af,{" "}
+        <b className="text-[var(--ink)]">hvilke odds bookmakeren giver dig:</b>
+      </p>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <CoinflipCard good odds={2.5} />
+        <CoinflipCard good={false} odds={1.5} />
+      </div>
+
+      <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
+        <b className="text-[var(--ink-2)]">"I snit pr. bet"</b> betyder, at du
+        vinder eller taber selvfølgelig det enkelte væddemål – men spiller du det{" "}
+        <b className="text-[var(--ink-2)]">mange gange</b>, ender du i gennemsnit{" "}
+        <b style={{ color: GOOD }}>+25 kr op</b> pr. gang med de gode odds, og{" "}
+        <b style={{ color: BAD }}>25 kr ned</b> med de dårlige. Det er summen af
+        mange bets, der afgør, om du tjener.
+      </p>
+
+      <p className="mt-4 rounded-lg border border-[var(--line)] bg-[var(--panel)] p-3 text-sm leading-relaxed text-[var(--ink-2)]">
+        <b className="text-[var(--accent)]">Det er hele idéen:</b> når bookmakeren
+        giver dig en <b className="text-[var(--ink)]">højere pris (odds)</b>, end
+        udfaldet reelt er værd, tjener du på den lange bane. Præcis de fejl finder
+        vores system for dig – kamp efter kamp. Prøv selv med skyderne herunder.
+      </p>
+    </div>
+  );
+}
+
 function ValueTool() {
   const [chance, setChance] = useState(52); // din vurdering af den reelle chance (%)
   const [odds, setOdds] = useState(2.1); // bookmakerens odds
@@ -369,16 +458,27 @@ function ValueTool() {
           et kasino.
         </p>
 
+        <CoinflipExplainer />
+      </div>
+
+      {/* controls + resultat */}
+      <div className="space-y-4 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-5">
+        <Verdict
+          ok={hasValue}
+          okText="VALUE BET – skalerbar profit"
+          noText="INGEN VALUE"
+        />
+
         <div className="space-y-4 rounded-xl border border-[var(--line)] bg-[var(--panel-2)] p-5">
           <Slider
-            label="Den reelle chance for at det sker"
+            label="Den reelle sandsynlighed for at det sker"
             help="Hvor ofte tror du udfaldet faktisk sker? Sætter du den til 60%, betyder det: hvis kampen blev spillet 100 gange, ville det ske i 60 af dem. Vores system regner det her ud for dig automatisk."
             value={chance}
             onChange={setChance}
             min={5}
             max={95}
             step={1}
-            format={(v) => pct(v, 0)}
+            format={(v) => `${pct(v, 0)} = fair odds ${dk(100 / v, 2)}`}
           />
           <Slider
             label="Odds bookmakeren tilbyder"
@@ -410,29 +510,20 @@ function ValueTool() {
           )}
           .
         </p>
-      </div>
-
-      {/* resultat */}
-      <div className="space-y-4 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-5">
-        <Verdict
-          ok={hasValue}
-          okText="VALUE BET – skalerbar profit"
-          noText="INGEN VALUE"
-        />
 
         <div className="mt-2">
           <StatRow label="Bookmakerens odds" value={dk(odds)} />
           <StatRow
             label={
-              <Term def="Odds kan regnes om til en chance i procent (100 ÷ odds). Det er den chance, bookmakeren 'tror på'. Er den lavere end din egen vurdering, er der value.">
-                …svarer til en chance på
+              <Term def="Odds kan regnes om til en sandsynlighed i procent (100 ÷ odds). Det er den sandsynlighed, bookmakeren 'tror på'. Er den lavere end din egen vurdering, er der value.">
+                …svarer til en sandsynlighed på
               </Term>
             }
             value={pct(impliedChance)}
           />
           <StatRow
             label={
-              <Term def="Fair odds er de 'ærlige' odds, der passer præcis til den chance, du har vurderet – uden bookmakerens avance. Er bookmakerens odds HØJERE end fair odds, er der value.">
+              <Term def="Fair odds er de 'ærlige' odds, der passer præcis til den sandsynlighed, du har vurderet – uden bookmakerens avance. Er bookmakerens odds HØJERE end fair odds, er der value.">
                 Fair odds (det den burde være)
               </Term>
             }
@@ -925,6 +1016,11 @@ function CompoundTool() {
           </span>
         </div>
 
+        <p className="text-xs text-[var(--muted)]">
+          💰 Gevinster hos danske/licenserede bookmakere er skattefri – beløbet er
+          det, du reelt sidder tilbage med.
+        </p>
+
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
           <defs>
             <linearGradient id="profFill" x1="0" y1="0" x2="0" y2="1">
@@ -1365,14 +1461,27 @@ export default function Overblik() {
           er mere kortsigtede – gode til at komme i gang og hente hurtige, sikre
           gevinster.
         </p>
+        <span
+          tabIndex={0}
+          className="group relative inline-flex cursor-help items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold outline-none"
+          style={{ color: GOOD, background: `${GOOD}1a` }}
+        >
+          💰 Alle gevinster er 100% skattefri
+          <span className="text-xs opacity-70">ⓘ</span>
+          <span className="pointer-events-none absolute left-0 top-full z-30 mt-2 hidden w-72 max-w-[80vw] rounded-lg border border-[var(--line)] bg-[var(--panel)] p-3 text-left text-xs font-normal leading-relaxed text-[var(--ink-2)] shadow-xl group-hover:block group-focus:block group-focus-within:block">
+            I Danmark er gevinster fra spiludbydere med dansk/EU-licens skattefri.
+            Bookmakeren betaler selv spilafgift til staten – derfor skal du hverken
+            betale skat eller indberette dine gevinster. Det, du vinder, er dit.
+          </span>
+        </span>
       </header>
 
       {/* Mini-guide for nye brugere */}
-      <div className="mb-8 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5">
-        <p className="mb-4 text-sm font-bold text-[var(--accent)]">
-          👋 Ny her? Sådan bruger du siden:
+      <div className="mb-8 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-6">
+        <p className="mb-5 text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
+          Ny her? Sådan bruger du siden
         </p>
-        <ol className="grid gap-4 sm:grid-cols-3">
+        <ol className="grid divide-y divide-white/25 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {[
             {
               t: "Vælg en metode",
@@ -1387,25 +1496,31 @@ export default function Overblik() {
               d: "Hold musen over ⓘ for en helt simpel forklaring.",
             },
           ].map((s, i) => (
-            <li key={i} className="flex gap-3">
+            <li
+              key={i}
+              className="flex gap-3 py-4 first:pt-0 last:pb-0 sm:px-5 sm:py-0 sm:first:pl-0 sm:last:pr-0"
+            >
               <span
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-                style={{ background: `${GOOD}22`, color: GOOD }}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-sm font-bold"
+                style={{ borderColor: `${GOOD}55`, color: GOOD }}
               >
                 {i + 1}
               </span>
               <div>
                 <div className="font-semibold text-[var(--ink)]">{s.t}</div>
-                <div className="text-sm text-[var(--muted)] leading-relaxed">
+                <div className="mt-0.5 text-sm leading-relaxed text-[var(--muted)]">
                   {s.d}
                 </div>
               </div>
             </li>
           ))}
         </ol>
-        <p className="mt-4 border-t border-[var(--line)] pt-4 text-sm text-[var(--ink-2)]">
-          💡 Gennemgå gerne fanerne i rækkefølge –{" "}
-          <b className="text-[var(--ink)]">Value betting → Surebetting → Arbitrage</b>{" "}
+        <p className="mt-6 border-t border-[var(--line)] pt-5 text-sm text-[var(--ink-2)]">
+          <b className="text-[var(--accent)]">Tip:</b> Gennemgå gerne fanerne i
+          rækkefølge –{" "}
+          <b className="text-[var(--ink)]">
+            Value betting → Surebetting → Arbitrage
+          </b>{" "}
           – så bygger forståelsen sig naturligt op.
         </p>
       </div>
@@ -1529,27 +1644,33 @@ export default function Overblik() {
             </div>
           </section>
 
-          <div className="mt-8 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-6">
-            <h3 className="mb-2 flex items-center gap-2 text-lg font-bold">
-              ⚙️ Ser det nemt ud?
-            </h3>
-            <p className="text-sm leading-relaxed text-[var(--ink-2)]">
-              Selve princippet er enkelt – men bag ved ligger der et system, der
-              skal passe sammen: du skal ramme de rigtige odds, den rigtige
-              timing og de rigtige bookmakere, holde styr på indbetalinger og
-              gennemspil, og undgå de fejl, der ellers æder profitten. Gør du det
-              på må og få, går det galt.
-            </p>
-            <p className="mt-3 text-sm leading-relaxed text-[var(--ink-2)]">
-              Det er præcis dét, vores{" "}
-              <b className="text-[var(--accent)]">system og videomateriale</b>{" "}
-              tager sig af. Vi har gjort det{" "}
-              <b className="text-[var(--ink)]">nærmest automatisk for dig</b> – det
-              hele er sat i system og kører, så du ikke skal regne eller holde
-              styr på noget. Vi guider dig skridt for skridt, så du altid ved
-              nøjagtig hvad du skal gøre – og du kun skal bruge tiden på at
-              placere dine bets.
-            </p>
+          <div className="mt-8 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--panel)]">
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-[var(--ink)]">
+                Ser det nemt ud?
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--ink-2)]">
+                Selve princippet er enkelt – men bag ved ligger et system, der
+                skal passe sammen: de rigtige odds, den rigtige timing og de
+                rigtige bookmakere, styr på indbetalinger og gennemspil, og alle
+                de fejl, der ellers æder profitten. Gør du det tilfældigt og uden
+                overblik, forsvinder gevinsten lige så hurtigt igen.
+              </p>
+            </div>
+            <div className="border-t border-[var(--line)] bg-[var(--panel-2)] p-6">
+              <div className="border-l-2 border-[var(--accent)] pl-4">
+                <p className="text-sm leading-relaxed text-[var(--ink-2)]">
+                  Det er præcis dét, vores{" "}
+                  <b className="text-[var(--accent)]">system og videomateriale</b>{" "}
+                  tager sig af. Vi har gjort det{" "}
+                  <b className="text-[var(--ink)]">nærmest automatisk for dig</b> –
+                  det hele er sat i system og kører, så du ikke skal regne eller
+                  holde styr på noget. Vi guider dig skridt for skridt, så du
+                  altid ved nøjagtig hvad du skal gøre – og du kun skal bruge
+                  tiden på at placere dine bets.
+                </p>
+              </div>
+            </div>
           </div>
         </>
       )}
