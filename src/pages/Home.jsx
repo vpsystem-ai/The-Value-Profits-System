@@ -256,9 +256,6 @@ export default function Home() {
           </div>
 
           <div className="mt-10 flex items-center justify-center gap-6 text-sm">
-            <Link to="/betingelser" className="link-accent">
-              Handelsbetingelser
-            </Link>
             <Link to="/privatliv" className="link-accent">
               Privatlivspolitik
             </Link>
