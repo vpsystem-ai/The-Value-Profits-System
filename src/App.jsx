@@ -14,6 +14,7 @@ const Home = lazy(() => import("./pages/Home"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Overblik = lazy(() => import("./pages/Overblik"));
+const Support = lazy(() => import("./pages/Support"));
 
 // Scroll til toppen ved sideskift – eller til et anker (#id) hvis der er et
 function ScrollToTop() {
@@ -63,6 +64,7 @@ export default function App() {
               <Route path="/betingelser" element={<Terms />} />
               <Route path="/privatliv" element={<Privacy />} />
               <Route path="/overblik" element={<Overblik />} />
+              <Route path="/support" element={<Support />} />
             </Routes>
           </main>
         </Suspense>

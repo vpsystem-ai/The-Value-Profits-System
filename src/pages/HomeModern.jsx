@@ -417,6 +417,9 @@ export default function HomeModern() {
                 © {new Date().getFullYear()} Value Profits System
               </div>
               <div className="flex items-center gap-6">
+                <Link to="/support" className="hover:text-white transition-colors">
+                  Support
+                </Link>
                 <Link to="/betingelser" className="hover:text-white transition-colors">
                   Handelsbetingelser
                 </Link>
