@@ -287,7 +287,7 @@ export default function Support() {
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-white">Udbyder</div>
-                  <p className="text-sm">Value Profit Trading</p>
+                  <p className="text-sm">Value Profits System</p>
                 </div>
               </div>
             </div>
