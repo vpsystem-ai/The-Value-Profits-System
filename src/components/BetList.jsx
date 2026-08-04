@@ -14,21 +14,46 @@ import {
 
 /** Konfiguration */
 const SHEET_ID = "1XUh7MYzti9EnVh4w5Jw7vre2dg6nYyWYMH9rg9VhPd0";
-const availableMonths = [
-  { label: "Juni 25", sheet: "Bet tracker_Juni25" },
-  { label: "Juli 25", sheet: "Bet tracker_Juli25" },
-  { label: "August 25", sheet: "Bet tracker_August25" },
-  { label: "September 25", sheet: "Bet tracker_September25" },
-  { label: "Oktober 25", sheet: "Bet tracker_Oktober25" },
-  { label: "November 25", sheet: "Bet tracker_November25" },
-  { label: "December 25", sheet: "Bet tracker_December25" },
-  { label: "Januar 26", sheet: "Bet tracker_Januar26" },
-  { label: "Februar 26", sheet: "Bet tracker_Februar26" },
-  { label: "Marts 26", sheet: "Bet tracker_Marts26" },
-  { label: "April 26", sheet: "Bet tracker_April26" },
-  { label: "Maj 26", sheet: "Bet tracker_Maj26" },
-  { label: "Juni 26", sheet: "Bet tracker_Juni26" },
+const SHEET_PREFIX = "Bet tracker_";
+// Juni 25 er den første måneds-fane i regnearket.
+const FIRST_SHEET_YEAR = 2025;
+const FIRST_SHEET_MONTH = 6;
+const MONTH_NAMES_DA = [
+  "Januar",
+  "Februar",
+  "Marts",
+  "April",
+  "Maj",
+  "Juni",
+  "Juli",
+  "August",
+  "September",
+  "Oktober",
+  "November",
+  "December",
 ];
+
+// Reserveliste hvis fanelisten ikke kan hentes: gæt navnene ud fra mønstret
+// "Bet tracker_<Måned><ÅÅ>", fra juni 25 til og med næste måned. Faner der
+// ikke findes svarer 400 og bliver sorteret fra. (opensheet er
+// case-insensitiv, så "juli26" og "Juli26" rammer samme fane.)
+const monthCandidates = () => {
+  const now = new Date();
+  const first = FIRST_SHEET_YEAR * 12 + (FIRST_SHEET_MONTH - 1);
+  const last = now.getFullYear() * 12 + now.getMonth() + 1;
+  const list = [];
+  for (let t = first; t <= last; t++) {
+    const y = Math.floor(t / 12);
+    const m = t % 12;
+    const yy = String(y).slice(2);
+    list.push({
+      key: t,
+      label: `${MONTH_NAMES_DA[m]} ${yy}`,
+      sheet: `${SHEET_PREFIX}${MONTH_NAMES_DA[m]}${yy}`,
+    });
+  }
+  return list;
+};
 
 /** Hjælpere */
 const canon = (s) =>
@@ -38,11 +63,31 @@ const canon = (s) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, "")
     .replace(/[^a-z0-9]/g, "");
+// Tåler både "1,975", "kr 1.343,00" og "-kr 680,00".
+const parseNumber = (v) => {
+  if (v == null) return 0;
+  const s = String(v)
+    .replace(/[^0-9,.-]/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+};
+const findKey = (row, navn) =>
+  Object.keys(row || {}).find((k) => canon(k) === navn);
 // Hvert måneds-ark har et dashboard øverst; selve bet-tabellen starter
 // længere nede. Vi finder header-rækken (Dato/Odds/Unit/Status) og læser
-// hvilke nøgler de fire kolonner ligger under, og henter så data derfra.
+// hvilke nøgler kolonnerne ligger under, og henter så data derfra.
 const parseSheet = (rows) => {
-  const cols = { dato: null, odds: null, unit: null, status: null };
+  if (!Array.isArray(rows) || !rows.length) return [];
+  const cols = {
+    dato: null,
+    odds: null,
+    unit: null,
+    status: null,
+    potentiel: null,
+    profit: null,
+  };
   let headerIdx = -1;
   for (let i = 0; i < rows.length; i++) {
     const entries = Object.entries(rows[i]);
@@ -53,26 +98,46 @@ const parseSheet = (rows) => {
       else if (cv === "odds") found.odds = k;
       else if (cv === "unit") found.unit = k;
       else if (cv === "status") found.status = k;
+      else if (cv === "potentieludbetaling") found.potentiel = k;
+      else if (cv === "profitpabet") found.profit = k;
     }
-    if (found.dato) {
+    if (found.dato != null) {
       Object.assign(cols, found);
       headerIdx = i;
       break;
     }
   }
   if (headerIdx === -1) return [];
-  return rows.slice(headerIdx + 1).map((r) => ({
-    dato: r[cols.dato],
-    odds: r[cols.odds],
-    unit: r[cols.unit],
-    status: r[cols.status],
-  }));
-};
-const parseNumber = (v) => {
-  if (v == null) return 0;
-  const s = String(v).trim().replace(/\./g, "").replace(",", ".");
-  const n = Number(s);
-  return Number.isFinite(n) ? n : 0;
+
+  // opensheet bruger arkets række 1 som nøgler. Er række 1 tom over to
+  // kolonner (fx Unit og "Expected Profit1" i August 25-fanen), kolliderer
+  // nøglerne og Unit-kolonnen falder helt ud af svaret — så bliver indsatsen
+  // 0 kr og måneden viser lydløst 0 % vækst. Mangler Unit, regner vi den ud
+  // fra fanens egen stake i stedet: tabt = |profit|, vundet = profit/(odds-1),
+  // og ellers potentiel udbetaling/odds (push o.l., hvor profit er 0).
+  // Bemærk: "" er en gyldig nøgle, så testen skal være mod null — ikke falsy.
+  const stakeKey = findKey(rows[0], "stakesize");
+  const arkStake = stakeKey ? parseNumber(rows[0][stakeKey]) : 0;
+  const manglerUnit = cols.unit == null;
+
+  return rows.slice(headerIdx + 1).map((r) => {
+    const odds = parseNumber(r[cols.odds]);
+    const status = r[cols.status];
+    let unit = manglerUnit ? 0 : parseNumber(r[cols.unit]);
+    if (manglerUnit && arkStake) {
+      const s = canon(status);
+      const profit = cols.profit == null ? 0 : parseNumber(r[cols.profit]);
+      const potentiel =
+        cols.potentiel == null ? 0 : parseNumber(r[cols.potentiel]);
+      let indsats = 0;
+      if (s.startsWith("tab") && profit) indsats = Math.abs(profit);
+      else if (s.startsWith("vun") && profit && odds > 1)
+        indsats = profit / (odds - 1);
+      else if (potentiel && odds) indsats = potentiel / odds;
+      unit = Math.round((indsats / arkStake) * 1000) / 1000;
+    }
+    return { dato: r[cols.dato], odds, unit, status };
+  });
 };
 const parseDateDA = (s) => {
   if (!s) return 0;
@@ -98,12 +163,131 @@ const kr = (n) =>
     currency: "DKK",
     minimumFractionDigits: 0,
   }).format(Math.round(n));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Fanenavnene læses direkte fra regnearket, så en fane kommer med uanset hvad
+// den er døbt — august 26 blev fx oprettet som "Bet tracer_august26". Google
+// sender CORS-headers på htmlview, så listen kan hentes fra browseren uden
+// API-nøgle.
+const SHEET_TABS_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/htmlview`;
+const decodeTabName = (s) =>
+  s
+    .replace(/\\x([0-9a-fA-F]{2})/g, (_, h) =>
+      String.fromCharCode(parseInt(h, 16))
+    )
+    .replace(/\\u([0-9a-fA-F]{4})/g, (_, h) =>
+      String.fromCharCode(parseInt(h, 16))
+    )
+    .replace(/\\(.)/g, "$1");
+const fetchSheetNames = async () => {
+  const res = await axios.get(SHEET_TABS_URL, { responseType: "text" });
+  const html = String(res.data || "");
+  const re = /\{name:\s*"((?:[^"\\]|\\.)*)"\s*,\s*pageUrl:/g;
+  const navne = [];
+  let m;
+  while ((m = re.exec(html)) !== null) navne.push(decodeTabName(m[1]));
+  return navne;
+};
+
+// En måneds-fane er en fane hvis navn slutter på måned + årstal — uanset hvad
+// der står foran. Så tæller "Bet tracker_Juli26" og "Bet tracer_august26" ens,
+// mens Samlet, Skabelon, Unibet osv. sorteres fra.
+const MONTH_RE = new RegExp(
+  `(${MONTH_NAMES_DA.map((m) => m.toLowerCase()).join("|")})(\\d{2})$`
+);
+const monthFromName = (navn) => {
+  const m = MONTH_RE.exec(canon(navn));
+  if (!m) return null;
+  const idx = MONTH_NAMES_DA.findIndex((n) => n.toLowerCase() === m[1]);
+  return {
+    key: (2000 + Number(m[2])) * 12 + idx,
+    label: `${MONTH_NAMES_DA[idx]} ${m[2]}`,
+    sheet: navn,
+  };
+};
+
+const discoverMonths = async () => {
+  try {
+    const fundet = (await fetchSheetNames()).map(monthFromName).filter(Boolean);
+    if (fundet.length) return fundet;
+  } catch (e) {
+    console.warn("[BetList] kunne ikke læse fanelisten — gætter navnene", e);
+  }
+  return monthCandidates();
+};
+
+const fetchSheet = async (sheet) => {
+  const url = `https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(
+    sheet
+  )}`;
+  for (let forsøg = 0; forsøg < 3; forsøg++) {
+    try {
+      const res = await axios.get(url);
+      return Array.isArray(res.data) ? res.data : null;
+    } catch (e) {
+      // 400 = fanen findes ikke (endnu). Alt andet er typisk opensheets
+      // rate-limit — der venter vi lidt og prøver igen.
+      if (e?.response?.status === 400) return null;
+      if (forsøg === 2) return null;
+      await sleep(600 * (forsøg + 1));
+    }
+  }
+  return null;
+};
+
+// Fanerne hentes få ad gangen; alle på én gang rammer rate-limiten.
+const runPooled = async (items, limit, fn) => {
+  const out = new Array(items.length);
+  let næste = 0;
+  const arbejder = async () => {
+    while (næste < items.length) {
+      const i = næste++;
+      out[i] = await fn(items[i]);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, arbejder)
+  );
+  return out;
+};
+
+const normalizeBets = (rows) =>
+  rows
+    .map((r) => ({
+      dato: r.dato || "",
+      datoTS: parseDateDA(r.dato),
+      odds: r.odds,
+      unit: r.unit,
+      status: normStatus(r.status),
+    }))
+    .filter((o) => o.datoTS > 0)
+    .sort((a, b) => a.datoTS - b.datoTS);
+
+// Alle måneder hentes én gang pr. sidevisning og genbruges på tværs af
+// knapperne, så skift mellem måneder ikke koster nye kald.
+let monthsCache = null;
+const loadMonths = async () => {
+  if (monthsCache) return monthsCache;
+  const resultater = await runPooled(await discoverMonths(), 4, async (m) => {
+    const rows = await fetchSheet(m.sheet);
+    if (!rows) return null;
+    const bets = normalizeBets(parseSheet(rows));
+    return bets.length ? { ...m, bets } : null;
+  });
+  // Skulle to faner dække samme måned (fx en omdøbning undervejs), beholder
+  // vi den med flest bets i stedet for at vise måneden to gange.
+  monthsCache = resultater
+    .filter(Boolean)
+    .sort((a, b) => a.key - b.key || b.bets.length - a.bets.length)
+    .filter((m, i, arr) => i === 0 || arr[i - 1].key !== m.key);
+  return monthsCache;
+};
 
 export default function BetList() {
   const [selectedMonth, setSelectedMonth] = useState("Alle");
   const [bankroll, setBankroll] = useState(10000);
   const [stake, setStake] = useState(400);
-  const [bets, setBets] = useState([]);
+  const [months, setMonths] = useState([]);
   const [visibleCount, setVisibleCount] = useState(6);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -121,39 +305,15 @@ export default function BetList() {
 
   useEffect(() => {
     let dead = false;
-    const fetchMonth = async (sheet) => {
-      const url = `https://opensheet.elk.sh/${SHEET_ID}/${sheet}`;
-      const res = await axios.get(url);
-      return res.data || [];
-    };
     const run = async () => {
       setLoading(true);
       setErrorMsg("");
       try {
-        let parsed = [];
-        if (selectedMonth === "Alle") {
-          const all = await Promise.all(
-            availableMonths.map((m) => fetchMonth(m.sheet))
-          );
-          parsed = all.flatMap((rows) => parseSheet(rows));
-        } else {
-          parsed = parseSheet(await fetchMonth(selectedMonth));
-        }
-        const normalized = parsed
-          .map((r, idx) => ({
-            i: idx,
-            dato: r.dato || "",
-            datoTS: parseDateDA(r.dato),
-            odds: parseNumber(r.odds),
-            unit: parseNumber(r.unit),
-            status: normStatus(r.status),
-          }))
-          .filter((o) => o.datoTS > 0)
-          .sort((a, b) => a.datoTS - b.datoTS);
-
+        const hentede = await loadMonths();
         if (dead) return;
-        setBets(normalized);
-        log("Rækker normaliseret:", normalized.length);
+        setMonths(hentede);
+        log("Måneder hentet:", hentede.map((m) => m.label).join(", "));
+        if (!hentede.length) setErrorMsg("Kunne ikke hente data.");
       } catch (e) {
         console.error(e);
         if (!dead) setErrorMsg("Kunne ikke hente data.");
@@ -165,7 +325,16 @@ export default function BetList() {
     return () => {
       dead = true;
     };
-  }, [selectedMonth]);
+  }, []);
+
+  const bets = useMemo(() => {
+    if (selectedMonth === "Alle")
+      return months
+        .flatMap((m) => m.bets)
+        .slice()
+        .sort((a, b) => a.datoTS - b.datoTS);
+    return months.find((m) => m.sheet === selectedMonth)?.bets || [];
+  }, [months, selectedMonth]);
 
   const simSaldo = useMemo(() => {
     let saldo = +bankroll || 0;
@@ -215,7 +384,7 @@ export default function BetList() {
       {/* Filter/inputs */}
       <div className="card-accent p-6">
         <div className="flex flex-wrap items-center gap-3">
-          {availableMonths.map((m) => (
+          {months.map((m) => (
             <button
               key={m.sheet}
               onClick={() => {
@@ -271,6 +440,14 @@ export default function BetList() {
           {/* Bet cards skeleton */}
           <SkeletonGrid />
         </>
+      ) : errorMsg ? (
+        <div className="card-accent p-6 text-center">
+          <p className="font-semibold">{errorMsg}</p>
+          <p className="mt-1 text-sm text-[var(--ink-2)]">
+            Tallene hentes direkte fra vores bet tracker. Prøv at genindlæse
+            siden om lidt.
+          </p>
+        </div>
       ) : (
         <>
           {/* KPI + graf */}
@@ -325,8 +502,8 @@ export default function BetList() {
                 <div className="font-semibold">
                   {selectedMonth === "Alle"
                     ? "Alle"
-                    : availableMonths.find((m) => m.sheet === selectedMonth)
-                        ?.label || selectedMonth}
+                    : months.find((m) => m.sheet === selectedMonth)?.label ||
+                      selectedMonth}
                 </div>
               </div>
 
