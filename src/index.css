@@ -394,6 +394,40 @@ a:focus-visible {
   font-weight: 800;
 }
 
+/* Måneden hvor app'en gik i luften. Prikken sidder i hjørnet af knappen og
+   vender om, når måneden er valgt, så den kan ses mod den fyldte baggrund. */
+.chip--lancering {
+  position: relative;
+}
+.chip--lancering::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.chip--lancering.chip--active::after {
+  background: rgba(11, 12, 14, 0.55);
+}
+
+/* Mindre og roligere variant til indstillingerne ved bankroll-feltet. En
+   fyldt grøn knap dér ville trække mere til sig end månedsvælgeren, som er
+   det man egentlig skal klikke rundt i. */
+.chip--sm {
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.6rem;
+  font-size: 0.875rem;
+}
+.chip--sm.chip--active {
+  color: var(--accent);
+  background: rgba(71, 250, 190, 0.1);
+  border-color: rgba(71, 250, 190, 0.55);
+  font-weight: 700;
+}
+
 /* Baggrunds-glød */
 .bg-glow {
   position: absolute;

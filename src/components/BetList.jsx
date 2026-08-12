@@ -18,6 +18,25 @@ const SHEET_PREFIX = "Bet tracker_";
 // Juni 25 er den første måneds-fane i regnearket.
 const FIRST_SHEET_YEAR = 2025;
 const FIRST_SHEET_MONTH = 6;
+
+// Web-app'ens bets kommer med fra juni 26 og lægges oveni regnearkets for de
+// måneder hvor begge har data. Det er to forskellige datasæt — regnearket er
+// den håndførte tracker, app'en er medlemmernes egne spil — og de dækker
+// hinanden næsten ikke: under 10 % af regnearkets juni-bets har samme dato,
+// odds og udfald som et af app'ens, hvilket er på niveau med hvad rent
+// tilfælde giver ved 19 spil om dagen i et smalt odds-interval.
+// App'en har også et par dage i maj 26, men kun fra den 27. Så halv måned
+// ville trække maj skævt, og der står regnearket alene.
+const APP_START_YEAR = 2026;
+const APP_START_MONTH = 6;
+const APP_CUTOVER = APP_START_YEAR * 12 + (APP_START_MONTH - 1);
+const APP_API_URL = "/api/bet365";
+
+// Indsats pr. spil som andel af bankrollen. Der falder omkring 25 spil om
+// dagen, så en gennemsnitsdag binder cirka halvdelen af bankrollen ved 2 %.
+// Den besøgende kan skifte selv; 2 % er hvad siden lander på.
+const UNIT_PCT = 0.02;
+const UNIT_VALG = [0.02, 0.03];
 const MONTH_NAMES_DA = [
   "Januar",
   "Februar",
@@ -263,30 +282,106 @@ const normalizeBets = (rows) =>
     .filter((o) => o.datoTS > 0)
     .sort((a, b) => a.datoTS - b.datoTS);
 
+// App'ens serie er ét spil pr. række med flad indsats — 1 unit hver. Den
+// støbes om til samme form som regnearkets bets, så resten af komponenten
+// ikke behøver vide hvor tallene kommer fra.
+const APP_STATUS = { won: "Vundet", lost: "Tabt", push: "Push" };
+const isoTilDA = (iso) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+};
+
+const loadAppMonths = async () => {
+  const res = await axios.get(APP_API_URL);
+  const serie = Array.isArray(res.data?.series) ? res.data.series : [];
+  const perMåned = new Map();
+  for (const s of serie) {
+    const m = /^(\d{4})-(\d{2})-\d{2}$/.exec(String(s.date || ""));
+    if (!m) continue;
+    const år = Number(m[1]);
+    const mdIdx = Number(m[2]) - 1;
+    const key = år * 12 + mdIdx;
+    if (key < APP_CUTOVER) continue;
+    if (!perMåned.has(key)) {
+      perMåned.set(key, {
+        key,
+        label: `${MONTH_NAMES_DA[mdIdx]} ${String(år).slice(2)}`,
+        // Egen id-form, så en app-måned aldrig kolliderer med et fanenavn.
+        sheet: `app:${m[1]}-${m[2]}`,
+        bets: [],
+      });
+    }
+    const dato = isoTilDA(s.date);
+    perMåned.get(key).bets.push({
+      dato,
+      datoTS: parseDateDA(dato),
+      odds: Number(s.odds) || 0,
+      unit: 1,
+      status: APP_STATUS[s.outcome] || "Ukendt",
+    });
+  }
+  return [...perMåned.values()]
+    .map((m) => ({
+      ...m,
+      bets: m.bets.filter((b) => b.datoTS > 0).sort((a, b) => a.datoTS - b.datoTS),
+    }))
+    .filter((m) => m.bets.length)
+    .sort((a, b) => a.key - b.key);
+};
+
 // Alle måneder hentes én gang pr. sidevisning og genbruges på tværs af
 // knapperne, så skift mellem måneder ikke koster nye kald.
 let monthsCache = null;
 const loadMonths = async () => {
   if (monthsCache) return monthsCache;
-  const resultater = await runPooled(await discoverMonths(), 4, async (m) => {
-    const rows = await fetchSheet(m.sheet);
-    if (!rows) return null;
-    const bets = normalizeBets(parseSheet(rows));
-    return bets.length ? { ...m, bets } : null;
-  });
+  const [resultater, appMåneder] = await Promise.all([
+    (async () =>
+      runPooled(await discoverMonths(), 4, async (m) => {
+        const rows = await fetchSheet(m.sheet);
+        if (!rows) return null;
+        const bets = normalizeBets(parseSheet(rows));
+        return bets.length ? { ...m, bets } : null;
+      }))(),
+    loadAppMonths().catch((e) => {
+      console.warn("[BetList] kunne ikke hente app'ens bets", e);
+      return null;
+    }),
+  ]);
   // Skulle to faner dække samme måned (fx en omdøbning undervejs), beholder
   // vi den med flest bets i stedet for at vise måneden to gange.
-  monthsCache = resultater
+  const ark = resultater
     .filter(Boolean)
     .sort((a, b) => a.key - b.key || b.bets.length - a.bets.length)
     .filter((m, i, arr) => i === 0 || arr[i - 1].key !== m.key);
+
+  // App'ens måneder lægges oveni regnearkets. Findes måneden begge steder,
+  // slås spillene sammen til én liste; ellers står kilden alene. Kan app'en
+  // ikke nås, bliver regnearket stående som det er — en historik der stopper
+  // i maj ville se ud som om vi holdt op med at spille.
+  const flettet = new Map(ark.map((m) => [m.key, m]));
+  for (const m of appMåneder ?? []) {
+    const fra_ark = flettet.get(m.key);
+    flettet.set(
+      m.key,
+      fra_ark
+        ? {
+            ...fra_ark,
+            bets: [...fra_ark.bets, ...m.bets].sort(
+              (a, b) => a.datoTS - b.datoTS
+            ),
+          }
+        : m
+    );
+  }
+  monthsCache = [...flettet.values()].sort((a, b) => a.key - b.key);
   return monthsCache;
 };
 
 export default function BetList() {
   const [selectedMonth, setSelectedMonth] = useState("Alle");
   const [bankroll, setBankroll] = useState(10000);
-  const [stake, setStake] = useState(400);
+  const [stake, setStake] = useState(10000 * UNIT_PCT);
+  const [unitPct, setUnitPct] = useState(UNIT_PCT);
   const [months, setMonths] = useState([]);
   const [visibleCount, setVisibleCount] = useState(6);
   const [loading, setLoading] = useState(false);
@@ -299,9 +394,9 @@ export default function BetList() {
   const log = (...a) => dref.current && console.log("[BetList]", ...a);
 
   useEffect(() => {
-    const s = Math.max(1, Math.round((+bankroll || 0) * 0.03));
+    const s = Math.max(1, Math.round((+bankroll || 0) * unitPct));
     setStake(s);
-  }, [bankroll]);
+  }, [bankroll, unitPct]);
 
   useEffect(() => {
     let dead = false;
@@ -335,6 +430,32 @@ export default function BetList() {
         .sort((a, b) => a.datoTS - b.datoTS);
     return months.find((m) => m.sheet === selectedMonth)?.bets || [];
   }, [months, selectedMonth]);
+
+  // Måneden hvor app'en kom til. Knappen har en prik, og vælger man den,
+  // folder forklaringen sig ud — ellers står prikken uforklaret.
+  const viserLancering = useMemo(
+    () =>
+      months.some(
+        (m) => m.key === APP_CUTOVER && m.sheet === selectedMonth
+      ),
+    [months, selectedMonth]
+  );
+
+  // Push er indsatsen retur. Den tæller hverken som vundet eller tabt, og
+  // holdes derfor uden for winraten — ellers ville en måned med mange
+  // annullerede kampe se ud til at have tabt dem. Samme regnestykke som i
+  // app'en, så det samme spil giver den samme winrate begge steder.
+  const tæl = useMemo(() => {
+    const vundet = bets.filter((b) => b.status === "Vundet").length;
+    const tabt = bets.filter((b) => b.status === "Tabt").length;
+    const afgjort = vundet + tabt;
+    return {
+      vundet,
+      tabt,
+      push: bets.filter((b) => b.status === "Push").length,
+      winrate: afgjort ? (vundet / afgjort) * 100 : 0,
+    };
+  }, [bets]);
 
   const simSaldo = useMemo(() => {
     let saldo = +bankroll || 0;
@@ -393,7 +514,10 @@ export default function BetList() {
               }}
               className={`chip ${
                 selectedMonth === m.sheet ? "chip--active" : ""
-              }`}
+              } ${m.key === APP_CUTOVER ? "chip--lancering" : ""}`}
+              title={
+                m.key === APP_CUTOVER ? "Appen blev lanceret her" : undefined
+              }
             >
               {m.label}
             </button>
@@ -408,7 +532,7 @@ export default function BetList() {
             Alle måneder
           </button>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex flex-wrap items-center gap-3">
             <label className="text-sm text-[var(--ink-2)]">Bankroll</label>
             <input
               type="number"
@@ -416,10 +540,45 @@ export default function BetList() {
               onChange={(e) => setBankroll(Number(e.target.value) || 0)}
               className="input-accent w-32 text-right"
             />
+
+            <span className="text-sm text-[var(--ink-2)]">Indsats pr. spil</span>
+            <div className="flex items-center gap-1">
+              {UNIT_VALG.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setUnitPct(p)}
+                  className={`chip chip--sm ${
+                    unitPct === p ? "chip--active" : ""
+                  }`}
+                >
+                  {Math.round(p * 100)} %
+                </button>
+              ))}
+            </div>
+
             <span className="text-sm text-accent font-semibold">
               1 unit = {stake} kr
             </span>
           </div>
+        </div>
+
+        {viserLancering && (
+          <p className="mt-4 rounded-lg border-l-2 border-[var(--accent)] bg-[rgba(71,250,190,0.06)] px-3 py-2 text-sm text-[var(--ink-2)]">
+            Appen blev lanceret i juni 26.
+          </p>
+        )}
+
+        <div className="mt-4 space-y-2 border-t border-[var(--line)] pt-4 text-sm text-[var(--ink-2)]">
+          <p>
+            Alle spil i oversigten er bets der er spillet — også i månederne før
+            appen blev lanceret i juni 26.
+          </p>
+          <p>
+            Tallene tager udgangspunkt i{" "}
+            <span className="font-semibold text-accent">én bookmaker</span>, så
+            opgørelsen er simpel og til at overskue. I praksis spiller vi på en
+            del flere danske bookmakere.
+          </p>
         </div>
       </div>
 
@@ -458,28 +617,26 @@ export default function BetList() {
                 <div className="font-semibold text-accent">{bets.length}</div>
 
                 <div className="text-[var(--ink-2)]">Vundet</div>
-                <div className="font-semibold text-accent">
-                  {bets.filter((b) => b.status === "Vundet").length}
-                </div>
+                <div className="font-semibold text-accent">{tæl.vundet}</div>
 
                 <div className="text-[var(--ink-2)]">Tabt</div>
-                <div className="font-semibold">
-                  {bets.filter((b) => b.status === "Tabt").length}
-                </div>
+                <div className="font-semibold">{tæl.tabt}</div>
+
+                {tæl.push > 0 && (
+                  <>
+                    <div className="text-[var(--ink-2)]">Push</div>
+                    <div className="font-semibold">{tæl.push}</div>
+                  </>
+                )}
 
                 <div className="text-[var(--ink-2)]">Winrate</div>
                 <div className="font-semibold text-accent">
-                  {Math.round(
-                    (bets.filter((b) => b.status === "Vundet").length /
-                      (bets.length || 1)) *
-                      100
-                  ) || 0}
-                  %
+                  {tæl.winrate.toFixed(1).replace(".", ",")}%
                 </div>
 
                 <div className="text-[var(--ink-2)]">Vækst i %</div>
                 <div className="font-semibold text-accent">
-                  {roiPct.toFixed(1)}%
+                  {roiPct.toFixed(1).replace(".", ",")}%
                 </div>
 
                 <div className="text-[var(--ink-2)]">Gns. odds</div>
@@ -567,10 +724,13 @@ export default function BetList() {
               const indsats = stake * b.unit;
               const res = b.status === "Vundet";
               const push = b.status === "Push";
+              // Gevinsten er det man sidder tilbage med ud over sin egen
+              // indsats — ikke hele udbetalingen. Push er indsatsen retur og
+              // giver hverken plus eller minus.
               const profit = res
-                ? Math.round(b.odds * indsats)
+                ? Math.round((b.odds - 1) * indsats)
                 : push
-                ? Math.round(indsats)
+                ? 0
                 : -Math.round(indsats);
               return (
                 <div key={i} className="card-accent p-5">
