@@ -87,7 +87,7 @@ export default function HowItWorks() {
           Lyder det som dig? Så er det værd at tage en snak.
         </p>
         <a
-          href="https://calendly.com/vpsystem1/30min"
+          href="https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website"
           target="_blank"
           rel="noreferrer"
           className="btn-accent"

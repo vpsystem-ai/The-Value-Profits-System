@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function SEO({
   title = "Value Betting System | Lær Value Betting & Tjen Penge på Sportsbetting",
-  description = "Lær value betting med dokumenteret strategi. 1600+ medlemmer, +EV fokus, komplet kursus og community. Penge-tilbage garanti. Start din profitable betting-rejse i dag.",
+  description = "Lær value betting med dokumenteret strategi. 1800+ medlemmer, +EV fokus, komplet kursus og community. Penge-tilbage garanti. Start din profitable betting-rejse i dag.",
   canonical = "https://valueprofitssystem.dk/",
   image = "https://valueprofitssystem.dk/og-image.png",
   type = "website",

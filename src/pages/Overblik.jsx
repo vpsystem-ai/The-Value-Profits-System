@@ -32,7 +32,7 @@ const GOOD = "#47fabe";
 const BAD = "#ff5c7a";
 
 const APP_SIGNUP_URL = "https://app.valueprofitsprotocol.dk/login";
-const CALENDLY_URL = "https://calendly.com/vpsystem1/30min";
+const BOOKING_URL = "https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website";
 const SKOOL_URL = "https://www.skool.com/the-value-profits-system";
 
 /* ---------- ordbog (hover-forklaringer for nybegyndere) ---------- */
@@ -1730,7 +1730,7 @@ export default function Overblik() {
             Opret gratis bruger nu
           </a>
           <a
-            href={CALENDLY_URL}
+            href={BOOKING_URL}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center justify-center rounded-lg border-2 border-[var(--accent)] bg-[#47fabe1a] px-6 py-3 text-base font-semibold text-[var(--accent)] transition-colors hover:bg-[#47fabe2e]"

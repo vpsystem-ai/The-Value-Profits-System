@@ -67,7 +67,7 @@ export default function NavModern() {
 
         {/* Desktop CTA */}
         <a
-          href="https://calendly.com/vpsystem1/30min"
+          href="https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website"
           target="_blank"
           rel="noreferrer"
           className="hidden md:inline-flex btn btn-primary"
@@ -136,7 +136,7 @@ export default function NavModern() {
             </a>
             <div className="pt-4 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
               <a
-                href="https://calendly.com/vpsystem1/30min"
+                href="https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website"
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-primary w-full justify-center"

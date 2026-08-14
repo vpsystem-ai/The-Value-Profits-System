@@ -75,7 +75,7 @@ export default function Home() {
                 Forstå det på 30 sekunder →
               </Link>
               <a
-                href="https://calendly.com/vpsystem1/30min"
+                href="https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website"
                 target="_blank"
                 rel="noreferrer"
                 className="btn-accent text-base px-5 py-2.5"
@@ -86,7 +86,7 @@ export default function Home() {
             {/* Social proof badges */}
             <div className="mt-8 md:mt-10 grid grid-cols-3 gap-3 sm:gap-4 max-w-2xl mx-auto">
               {[
-                { value: "1600+", label: "Aktive medlemmer" },
+                { value: "1800+", label: "Aktive medlemmer" },
                 { value: "100+", label: "Daglige bets" },
                 { value: "7+", label: "År erfaring" },
               ].map((s) => (
@@ -225,31 +225,31 @@ export default function Home() {
           {/* Final CTA */}
           <div className="relative mt-8 md:mt-12 max-w-3xl mx-auto">
             <div className="bg-glow bg-glow-lg left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
-            <div className="card-accent relative z-10 p-8 md:p-10 text-center">
-              <h3 className="h2 mb-4">Klar til at komme i gang?</h3>
-              <p className="text-lg text-[var(--ink-2)] mb-6 max-w-xl mx-auto">
-                Book en gratis 30 minutters demo, eller tilmeld dig vores gratis
+            <div className="card-accent relative z-10 p-5 md:p-6 text-center">
+              <h3 className="h3 mb-2">Klar til at komme i gang?</h3>
+              <p className="text-sm text-[var(--ink-2)] mb-4 max-w-xl mx-auto">
+                Book en gratis strategisamtale, eller tilmeld dig vores gratis
                 Skool community for at lære mere.
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5">
                 <a
-                  href="https://calendly.com/vpsystem1/30min"
+                  href="https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website"
                   target="_blank"
                   rel="noreferrer"
-                  className="btn-accent text-lg px-8 py-4"
+                  className="btn-accent text-sm px-5 py-2.5"
                 >
-                  Book et gratis intromøde
+                  Book gratis strategisamtale
                 </a>
                 <a
                   href="https://www.skool.com/the-value-profits-system/about"
                   target="_blank"
                   rel="noreferrer"
-                  className="btn-outline-accent text-lg px-8 py-4"
+                  className="btn-outline-accent text-sm px-5 py-2.5"
                 >
                   Tilmeld gratis community
                 </a>
               </div>
-              <p className="text-sm text-[var(--muted)] mt-6">
+              <p className="text-xs text-[var(--muted)] mt-4">
                 Ingen kreditkort påkrævet • 100% risikofrit
               </p>
             </div>

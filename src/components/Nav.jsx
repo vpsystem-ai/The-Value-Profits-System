@@ -46,7 +46,7 @@ export default function Nav() {
 
         {/* Desktop CTA */}
         <a
-          href="https://calendly.com/vpsystem1/30min"
+          href="https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website"
           target="_blank"
           rel="noreferrer"
           className="hidden md:inline-flex btn-accent text-sm px-3 py-1.2"
@@ -129,7 +129,7 @@ export default function Nav() {
               Anmeldelser
             </Link>
             <a
-              href="https://calendly.com/vpsystem1/30min"
+              href="https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website"
               target="_blank"
               rel="noreferrer"
               className="btn-accent mt-2 text-center"

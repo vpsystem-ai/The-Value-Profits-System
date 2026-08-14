@@ -13,7 +13,7 @@ import SEO from "../components/SEO";
 
 const SUPPORT_EMAIL = "asger@valueprofitssystem.dk";
 const SKOOL_URL = "https://www.skool.com/the-value-profits-system";
-const CALENDLY_URL = "https://calendly.com/vpsystem1/30min";
+const BOOKING_URL = "https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website";
 
 const EMNER = [
   "Spørgsmål til app'en",
@@ -310,7 +310,7 @@ export default function Support() {
                   Spørg i vores community
                 </a>
                 <a
-                  href={CALENDLY_URL}
+                  href={BOOKING_URL}
                   target="_blank"
                   rel="noreferrer"
                   className="btn-outline-accent w-full text-center"

@@ -20,7 +20,7 @@ export default function HeroWithStatsCountUp() {
       {
         id: "revenue",
         prefix: "",
-        value: 1600,
+        value: 1800,
         suffix: "+",
         label: "Uddannet gennem Value Profits System",
       },

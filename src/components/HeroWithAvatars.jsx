@@ -27,7 +27,7 @@ export default function HeroWithAvatars() {
           ))}
         </div>
         <div className="text-[var(--ink-2)] text-sm sm:text-base ml-2">
-          <span className="font-bold text-[var(--accent)]">1600+</span> medlemmer
+          <span className="font-bold text-[var(--accent)]">1800+</span> medlemmer
         </div>
       </div>
 

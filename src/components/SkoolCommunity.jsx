@@ -1,7 +1,7 @@
 import React from "react";
 
 const SKOOL_URL = "https://www.skool.com/the-value-profits-system";
-const CALENDLY_URL = "https://calendly.com/vpsystem1/30min";
+const BOOKING_URL = "https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website";
 
 const iconProps = {
   width: 20,
@@ -23,7 +23,7 @@ export default function SkoolCommunity() {
         </svg>
       ),
       title: "Aktivt community",
-      description: "Få adgang til vores Skool-gruppe med 1600+ medlemmer",
+      description: "Få adgang til vores Skool-gruppe med 1800+ medlemmer",
     },
     {
       icon: (
@@ -109,7 +109,7 @@ export default function SkoolCommunity() {
                   <span aria-hidden>→</span>
                 </a>
                 <a
-                  href={CALENDLY_URL}
+                  href={BOOKING_URL}
                   target="_blank"
                   rel="noreferrer"
                   className="btn-outline-accent inline-flex items-center justify-center"
@@ -123,7 +123,7 @@ export default function SkoolCommunity() {
               </p>
             </div>
 
-            {/* Højre – Skool-billede med 1600+ overlay + stats (klik = Skool) */}
+            {/* Højre – Skool-billede med 1800+ overlay + stats (klik = Skool) */}
             <a
               href={SKOOL_URL}
               target="_blank"
@@ -140,7 +140,7 @@ export default function SkoolCommunity() {
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
                   <div className="text-4xl md:text-5xl font-black glow-accent leading-none">
-                    1600+
+                    1800+
                   </div>
                   <div className="mt-1 text-[var(--ink-2)]">Aktive medlemmer</div>
                 </div>

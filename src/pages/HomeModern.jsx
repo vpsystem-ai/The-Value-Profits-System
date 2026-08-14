@@ -67,7 +67,7 @@ export default function HomeModern() {
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 fade-in"
                    style={{ animationDelay: '0.4s' }}>
-                <a href="https://calendly.com/vpsystem1/30min"
+                <a href="https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website"
                    target="_blank"
                    rel="noreferrer"
                    className="btn btn-primary text-lg px-8 py-4 group">
@@ -218,7 +218,7 @@ export default function HomeModern() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
                       </a>
-                      <a href="https://calendly.com/vpsystem1/30min"
+                      <a href="https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website"
                          target="_blank"
                          rel="noreferrer"
                          className="btn btn-ghost">
@@ -385,7 +385,7 @@ export default function HomeModern() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-                  <a href="https://calendly.com/vpsystem1/30min"
+                  <a href="https://links.asgerleerskov.dk/widget/bookings/vps-strategisamtale?utm_source=hjemmeside&utm_medium=website"
                      target="_blank"
                      rel="noreferrer"
                      className="btn btn-primary text-lg px-10 py-4">

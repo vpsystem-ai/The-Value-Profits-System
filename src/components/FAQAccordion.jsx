@@ -23,8 +23,7 @@ export default function FAQ() {
   const [open, setOpen] = useState(null);
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="h2 text-white">Ofte stillede spørgsmål</h2>
-      <div className="mt-6 space-y-3">
+      <div className="space-y-3">
         {faqData.map((item, i) => {
           const active = open === i;
           return (
